@@ -1,0 +1,33 @@
+# Виртуальное окружение
+.venv/
+.venv*/
+
+# Python кеши и сборки
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+build/
+dist/
+*.egg-info/
+
+# IDE/редактор
+.idea/
+.vscode/
+*.iml
+
+# Тестовые/временные артефакты
+.pytest_cache/
+.mypy_cache/
+.cache/
+*.log
+
+# Секреты и локальные настройки
+.env
+.env.*
+
+# Генерируемая документация
+doc-env.md
+
+# Временные директории клонирования
+envdoc_run_*/
