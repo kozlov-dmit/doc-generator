@@ -1,0 +1,49 @@
+spring:
+  main:
+    allow-bean-definition-overriding: true
+
+app:
+  temp-dir: ${java.io.tmpdir}/env-doc-agent-test
+
+bitbucket:
+  token: test-token
+  username: test-user
+
+# GigaChat test configuration (mock URLs for testing)
+gigachat:
+  api-url: http://localhost:8089/api/v1
+  auth-url: http://localhost:8089/oauth
+  credentials: test-credentials
+  scope: GIGACHAT_API_PERS
+  model: GigaChat-Test
+  temperature: 0.0
+  max-tokens: 100
+  timeout-seconds: 10
+  verify-ssl: false
+
+confluence:
+  enabled: false
+
+output:
+  markdown:
+    enabled: true
+    path: ${java.io.tmpdir}/env-doc-agent-test/output
+
+logging:
+  level:
+    root: WARN
+    com.example.envdoc: DEBUG
+
+# Actuator test configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true

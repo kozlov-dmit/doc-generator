@@ -1,0 +1,88 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: env-doc-agent
+
+# Application configuration
+app:
+  temp-dir: ${java.io.tmpdir}/env-doc-agent
+  repo-retention-minutes: 60
+  max-repo-size-mb: 500
+
+# BitBucket configuration
+bitbucket:
+  token: ${BITBUCKET_TOKEN:}
+  username: ${BITBUCKET_USERNAME:}
+  clone-timeout-seconds: 300
+
+# GigaChat configuration (used by GigaChatConfig.java)
+gigachat:
+  api-url: https://gigachat.devices.sberbank.ru/api/v1
+  auth-url: https://ngw.devices.sberbank.ru:9443/api/v2/oauth
+  credentials: ${GIGACHAT_CREDENTIALS:}
+  ca-pem: ${GIGACHAT_CA_PEM:}
+  cert-pem: ${GIGACHAT_CERT_PEM:}
+  key-pem: ${GIGACHAT_KEY_PEM:}
+  key-password: ${GIGACHAT_KEY_PASSWORD:}
+  scope: ${GIGACHAT_SCOPE:GIGACHAT_API_PERS}
+  model: ${GIGACHAT_MODEL:GigaChat-Pro}
+  temperature: 0.3
+  max-tokens: 4096
+  timeout-seconds: 120
+  verify-ssl: false
+
+# Confluence configuration
+confluence:
+  enabled: ${CONFLUENCE_ENABLED:false}
+  base-url: ${CONFLUENCE_URL:}
+  username: ${CONFLUENCE_USERNAME:}
+  token: ${CONFLUENCE_TOKEN:}
+  space-key: ${CONFLUENCE_SPACE:}
+  timeout-seconds: 30
+
+# Output configuration
+output:
+  markdown:
+    enabled: true
+    path: ${OUTPUT_PATH:./output}
+    default-filename: ENV_VARIABLES.md
+
+# Logging configuration
+logging:
+  level:
+    root: INFO
+    com.example.envdoc: INFO
+    org.eclipse.jgit: WARN
+    org.springframework.web: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# Async configuration for background jobs
+spring.task.execution:
+  pool:
+    core-size: 2
+    max-size: 4
+    queue-capacity: 10
+  thread-name-prefix: analysis-
+
+# Actuator and Prometheus metrics configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    prometheus:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        gigachat.duration: true
+        analysis.duration: true
+      percentiles:
+        gigachat.duration: 0.5, 0.95, 0.99
+        analysis.duration: 0.5, 0.95, 0.99
