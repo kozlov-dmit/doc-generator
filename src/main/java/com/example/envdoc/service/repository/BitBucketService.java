@@ -1,4 +1,4 @@
-package com.example.envdoc.service;
+package com.example.envdoc.service.repository;
 
 import com.example.envdoc.config.AppConfig;
 import com.example.envdoc.config.BitBucketConfig;

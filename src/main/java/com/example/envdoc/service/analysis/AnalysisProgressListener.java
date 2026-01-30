@@ -1,4 +1,4 @@
-package com.example.envdoc.service;
+package com.example.envdoc.service.analysis;
 
 /**
  * Колбэк прогресса анализа.

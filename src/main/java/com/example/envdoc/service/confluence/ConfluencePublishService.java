@@ -1,4 +1,4 @@
-package com.example.envdoc.service;
+package com.example.envdoc.service.confluence;
 
 import com.example.envdoc.dto.AnalysisRequest;
 import com.example.envdoc.model.AnalysisResult;

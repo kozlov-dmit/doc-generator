@@ -1,4 +1,4 @@
-package com.example.envdoc.service;
+package com.example.envdoc.service.repository;
 
 import java.nio.file.Path;
 

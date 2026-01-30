@@ -2,10 +2,10 @@ package com.example.envdoc.integration;
 
 import com.example.envdoc.model.AnalysisResult;
 import com.example.envdoc.model.EnvVariable;
-import com.example.envdoc.service.DocumentGenerator;
-import com.example.envdoc.service.EnvVarExtractor;
-import com.example.envdoc.service.SourceCodeAnalyzer;
-import com.example.envdoc.service.UsageAnalyzer;
+import com.example.envdoc.service.documentation.DocumentGenerator;
+import com.example.envdoc.service.extraction.EnvVarExtractor;
+import com.example.envdoc.service.extraction.SourceCodeAnalyzer;
+import com.example.envdoc.service.extraction.UsageAnalyzer;
 import com.example.envdoc.config.OutputConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

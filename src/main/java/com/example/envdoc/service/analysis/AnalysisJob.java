@@ -1,4 +1,4 @@
-package com.example.envdoc.service;
+package com.example.envdoc.service.analysis;
 
 import com.example.envdoc.dto.AnalysisRequest;
 import com.example.envdoc.dto.AnalysisResponse;

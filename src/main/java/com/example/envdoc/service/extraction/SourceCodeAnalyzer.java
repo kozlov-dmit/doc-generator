@@ -1,4 +1,4 @@
-package com.example.envdoc.service;
+package com.example.envdoc.service.extraction;
 
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.ParseResult;

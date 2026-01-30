@@ -1,8 +1,8 @@
 package com.example.envdoc.cli;
 
 import com.example.envdoc.model.AnalysisResult;
-import com.example.envdoc.service.AnalysisService;
-import com.example.envdoc.service.ConfluencePublisher;
+import com.example.envdoc.service.analysis.AnalysisService;
+import com.example.envdoc.service.confluence.ConfluencePublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;

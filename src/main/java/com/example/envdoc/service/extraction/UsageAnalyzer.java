@@ -1,4 +1,4 @@
-package com.example.envdoc.service;
+package com.example.envdoc.service.extraction;
 
 import com.example.envdoc.model.EnvVariable;
 import com.example.envdoc.model.UsagePurpose;

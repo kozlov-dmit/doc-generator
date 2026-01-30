@@ -1,9 +1,16 @@
-package com.example.envdoc.service;
+package com.example.envdoc.service.analysis;
 
 import com.example.envdoc.dto.AnalysisRequest;
 import com.example.envdoc.metrics.AnalysisMetrics;
 import com.example.envdoc.model.AnalysisResult;
 import com.example.envdoc.model.EnvVariable;
+import com.example.envdoc.service.confluence.ConfluencePublishService;
+import com.example.envdoc.service.documentation.DocumentGenerator;
+import com.example.envdoc.service.documentation.GigaChatService;
+import com.example.envdoc.service.extraction.EnvVarExtractor;
+import com.example.envdoc.service.extraction.UsageAnalyzer;
+import com.example.envdoc.service.repository.RepositoryHandle;
+import com.example.envdoc.service.repository.RepositoryResolver;
 import io.micrometer.core.instrument.Timer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

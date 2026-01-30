@@ -2,7 +2,7 @@ package com.example.envdoc.controller;
 
 import com.example.envdoc.dto.AnalysisRequest;
 import com.example.envdoc.dto.AnalysisResponse;
-import com.example.envdoc.service.AnalysisService;
+import com.example.envdoc.service.analysis.AnalysisService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

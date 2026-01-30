@@ -2,7 +2,7 @@ package com.example.envdoc.controller;
 
 import com.example.envdoc.dto.AnalysisRequest;
 import com.example.envdoc.dto.AnalysisResponse;
-import com.example.envdoc.service.AnalysisService;
+import com.example.envdoc.service.analysis.AnalysisService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

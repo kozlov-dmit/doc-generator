@@ -1,4 +1,4 @@
-package com.example.envdoc.service;
+package com.example.envdoc.service.documentation;
 
 import com.example.envdoc.config.OutputConfig;
 import com.example.envdoc.model.*;

@@ -1,4 +1,4 @@
-package com.example.envdoc.service;
+package com.example.envdoc.service.confluence;
 
 import com.example.envdoc.config.ConfluenceConfig;
 import com.fasterxml.jackson.databind.JsonNode;
