@@ -47,6 +47,27 @@ public class AnalysisController {
     }
 
     /**
+     * Синхронный анализ репозитория и возврат Markdown документации.
+     *
+     * POST /api/v1/analyze-sync
+     */
+    @PostMapping("/analyze-sync")
+    public ResponseEntity<String> analyzeSync(@RequestBody @Valid AnalysisRequest request) {
+        log.info("Starting sync analysis for repository: {}", request.getRepositoryUrl());
+
+        var result = analysisService.analyzeSync(
+                request.getRepositoryUrl(),
+                request.getBranch(),
+                request.getBitbucketToken()
+        );
+
+        String markdown = result.getMarkdownContent();
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType("text/markdown; charset=utf-8"))
+                .body(markdown != null ? markdown : "");
+    }
+
+    /**
      * Возвращает статус анализа.
      *
      * GET /api/v1/analyze/{jobId}
