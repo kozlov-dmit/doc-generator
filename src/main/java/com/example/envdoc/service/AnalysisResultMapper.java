@@ -47,6 +47,7 @@ public class AnalysisResultMapper {
                     .filePath(var.getDefinition().getFilePath())
                     .lineNumber(var.getDefinition().getLineNumber())
                     .codeSnippet(var.getDefinition().getCodeSnippet())
+                    .moduleName(var.getDefinition().getModuleName())
                     .build();
         }
 

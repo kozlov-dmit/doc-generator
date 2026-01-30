@@ -58,35 +58,50 @@ public class GigaChatMetricsListener implements ChatModelListener {
 
     @Override
     public void onResponse(ChatModelResponseContext responseContext) {
+        long durationNanos = -1;
         Object startTimeObj = responseContext.attributes().get(REQUEST_START_TIME);
         if (startTimeObj instanceof Long startTime) {
-            long durationNanos = System.nanoTime() - startTime;
+            durationNanos = System.nanoTime() - startTime;
             duration.record(Duration.ofNanos(durationNanos));
         }
 
         TokenUsage tokenUsage = responseContext.chatResponse().tokenUsage();
+        Long inputTokens = null;
+        Long outputTokens = null;
         if (tokenUsage != null) {
             if (tokenUsage.inputTokenCount() != null) {
                 tokensInput.record(tokenUsage.inputTokenCount());
+                inputTokens = tokenUsage.inputTokenCount().longValue();
             }
             if (tokenUsage.outputTokenCount() != null) {
                 tokensOutput.record(tokenUsage.outputTokenCount());
+                outputTokens = tokenUsage.outputTokenCount().longValue();
             }
         }
 
-        log.debug("GigaChat request completed successfully");
+        log.info(
+            "GigaChat request completed: durationMs={}, inputTokens={}, outputTokens={}",
+            durationNanos >= 0 ? Duration.ofNanos(durationNanos).toMillis() : null,
+            inputTokens,
+            outputTokens
+        );
     }
 
     @Override
     public void onError(ChatModelErrorContext errorContext) {
         errorsTotal.increment();
 
+        long durationNanos = -1;
         Object startTimeObj = errorContext.attributes().get(REQUEST_START_TIME);
         if (startTimeObj instanceof Long startTime) {
-            long durationNanos = System.nanoTime() - startTime;
+            durationNanos = System.nanoTime() - startTime;
             duration.record(Duration.ofNanos(durationNanos));
         }
 
-        log.warn("GigaChat request failed: {}", errorContext.error().getMessage());
+        log.warn(
+            "GigaChat request failed: durationMs={}, error={}",
+            durationNanos >= 0 ? Duration.ofNanos(durationNanos).toMillis() : null,
+            errorContext.error().getMessage()
+        );
     }
 }

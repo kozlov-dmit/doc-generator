@@ -67,12 +67,13 @@ public class EnvVarExtractor {
 
         for (Path configFile : configFiles) {
             String relativePath = repoPath.relativize(configFile).toString();
+            String moduleName = resolveModuleName(repoPath, configFile);
             log.debug("Processing config file: {}", relativePath);
 
             if (configFile.toString().endsWith(".yml") || configFile.toString().endsWith(".yaml")) {
-                extractFromYaml(configFile, relativePath, variables);
+                extractFromYaml(configFile, relativePath, moduleName, variables);
             } else if (configFile.toString().endsWith(".properties")) {
-                extractFromProperties(configFile, relativePath, variables);
+                extractFromProperties(configFile, relativePath, moduleName, variables);
             }
         }
     }
@@ -80,7 +81,10 @@ public class EnvVarExtractor {
     /**
      * Извлекает переменные из YAML файла.
      */
-    private void extractFromYaml(Path yamlFile, String relativePath, Map<String, EnvVariable> variables) {
+    private void extractFromYaml(Path yamlFile,
+                                 String relativePath,
+                                 String moduleName,
+                                 Map<String, EnvVariable> variables) {
         try {
             String content = Files.readString(yamlFile);
             List<String> lines = Files.readAllLines(yamlFile);
@@ -106,6 +110,7 @@ public class EnvVarExtractor {
                         .filePath(relativePath)
                         .lineNumber(lineNumber)
                         .codeSnippet(codeSnippet)
+                        .moduleName(moduleName)
                         .build();
 
                 EnvVariable existing = variables.get(varName);
@@ -128,7 +133,10 @@ public class EnvVarExtractor {
     /**
      * Извлекает переменные из Properties файла.
      */
-    private void extractFromProperties(Path propsFile, String relativePath, Map<String, EnvVariable> variables) {
+    private void extractFromProperties(Path propsFile,
+                                       String relativePath,
+                                       String moduleName,
+                                       Map<String, EnvVariable> variables) {
         try {
             List<String> lines = Files.readAllLines(propsFile);
 
@@ -149,6 +157,7 @@ public class EnvVarExtractor {
                             .filePath(relativePath)
                             .lineNumber(i + 1)
                             .codeSnippet(line.trim())
+                            .moduleName(moduleName)
                             .build();
 
                     if (!variables.containsKey(varName)) {
@@ -178,25 +187,26 @@ public class EnvVarExtractor {
 
         for (Path javaFile : javaFiles) {
             String relativePath = repoPath.relativize(javaFile).toString();
+            String moduleName = resolveModuleName(repoPath, javaFile);
             log.debug("Processing Java file: {}", relativePath);
 
             sourceCodeAnalyzer.parseJavaFile(javaFile).ifPresent(cu -> {
                 String className = sourceCodeAnalyzer.extractFullClassName(cu);
 
                 // 1. @Value аннотации
-                extractFromValueAnnotations(cu, relativePath, className, variables);
+                extractFromValueAnnotations(cu, relativePath, className, moduleName, variables);
 
                 // 2. @ConfigurationProperties
-                extractFromConfigProperties(cu, relativePath, className, variables, propertyDefaults);
+                extractFromConfigProperties(cu, relativePath, className, moduleName, variables, propertyDefaults);
 
                 // 3. System.getenv()
-                extractFromSystemGetenv(cu, relativePath, className, variables);
+                extractFromSystemGetenv(cu, relativePath, className, moduleName, variables);
 
                 // 4. System.getProperty()
-                extractFromSystemGetProperty(cu, relativePath, className, variables);
+                extractFromSystemGetProperty(cu, relativePath, className, moduleName, variables);
 
                 // 5. Environment.getProperty()
-                extractFromEnvironmentApi(cu, relativePath, className, variables);
+                extractFromEnvironmentApi(cu, relativePath, className, moduleName, variables);
             });
         }
     }
@@ -204,8 +214,11 @@ public class EnvVarExtractor {
     /**
      * Извлекает переменные из аннотаций @Value.
      */
-    private void extractFromValueAnnotations(CompilationUnit cu, String filePath, String className,
-                                              Map<String, EnvVariable> variables) {
+    private void extractFromValueAnnotations(CompilationUnit cu,
+                                             String filePath,
+                                             String className,
+                                             String moduleName,
+                                             Map<String, EnvVariable> variables) {
         List<FieldDeclaration> fields = sourceCodeAnalyzer.findFieldsWithAnnotation(cu, "Value");
 
         for (FieldDeclaration field : fields) {
@@ -240,6 +253,7 @@ public class EnvVarExtractor {
                         .className(className)
                         .fieldOrMethodName(fieldName)
                         .codeSnippet(field.toString())
+                        .moduleName(moduleName)
                         .build();
 
                 if (!variables.containsKey(varName)) {
@@ -268,6 +282,7 @@ public class EnvVarExtractor {
     private void extractFromConfigProperties(CompilationUnit cu,
                                              String filePath,
                                              String className,
+                                             String moduleName,
                                              Map<String, EnvVariable> variables,
                                              Map<String, String> propertyDefaults) {
         if (!sourceCodeAnalyzer.hasClassAnnotation(cu, "ConfigurationProperties")) {
@@ -303,6 +318,7 @@ public class EnvVarExtractor {
                                             .className(className)
                                             .fieldOrMethodName(var.getNameAsString())
                                             .codeSnippet(field.toString())
+                                            .moduleName(moduleName)
                                             .build();
 
                                     EnvVariable envVar = EnvVariable.builder()
@@ -323,8 +339,11 @@ public class EnvVarExtractor {
     /**
      * Извлекает переменные из вызовов System.getenv().
      */
-    private void extractFromSystemGetenv(CompilationUnit cu, String filePath, String className,
-                                          Map<String, EnvVariable> variables) {
+    private void extractFromSystemGetenv(CompilationUnit cu,
+                                         String filePath,
+                                         String className,
+                                         String moduleName,
+                                         Map<String, EnvVariable> variables) {
         List<MethodCallExpr> getenvCalls = sourceCodeAnalyzer.findMethodCalls(cu, "getenv");
 
         for (MethodCallExpr call : getenvCalls) {
@@ -346,6 +365,7 @@ public class EnvVarExtractor {
                                         .className(className)
                                         .fieldOrMethodName(methodName)
                                         .codeSnippet(call.toString())
+                                        .moduleName(moduleName)
                                         .build();
 
                                 EnvVariable envVar = EnvVariable.builder()
@@ -364,8 +384,11 @@ public class EnvVarExtractor {
     /**
      * Извлекает переменные из вызовов System.getProperty().
      */
-    private void extractFromSystemGetProperty(CompilationUnit cu, String filePath, String className,
-                                               Map<String, EnvVariable> variables) {
+    private void extractFromSystemGetProperty(CompilationUnit cu,
+                                              String filePath,
+                                              String className,
+                                              String moduleName,
+                                              Map<String, EnvVariable> variables) {
         List<MethodCallExpr> getPropertyCalls = sourceCodeAnalyzer.findMethodCalls(cu, "getProperty");
 
         for (MethodCallExpr call : getPropertyCalls) {
@@ -393,6 +416,7 @@ public class EnvVarExtractor {
                                 .className(className)
                                 .fieldOrMethodName(methodName)
                                 .codeSnippet(call.toString())
+                                .moduleName(moduleName)
                                 .build();
 
                         EnvVariable envVar = EnvVariable.builder()
@@ -413,7 +437,8 @@ public class EnvVarExtractor {
      * Извлекает переменные из Spring Environment API.
      */
     private void extractFromEnvironmentApi(CompilationUnit cu, String filePath, String className,
-                                            Map<String, EnvVariable> variables) {
+                                           String moduleName,
+                                           Map<String, EnvVariable> variables) {
         List<MethodCallExpr> getPropertyCalls = sourceCodeAnalyzer.findMethodCalls(cu, "getProperty");
 
         for (MethodCallExpr call : getPropertyCalls) {
@@ -451,6 +476,7 @@ public class EnvVarExtractor {
                                 .className(className)
                                 .fieldOrMethodName(methodName)
                                 .codeSnippet(call.toString())
+                                .moduleName(moduleName)
                                 .build();
 
                         EnvVariable envVar = EnvVariable.builder()
@@ -667,6 +693,28 @@ public class EnvVarExtractor {
             return defaultValue.substring(1);
         }
         return null;
+    }
+
+    private String resolveModuleName(Path repoPath, Path filePath) {
+        Path repoRoot = repoPath.toAbsolutePath().normalize();
+        Path current = filePath.toAbsolutePath().normalize().getParent();
+        while (current != null && current.startsWith(repoRoot)) {
+            if (isModuleRoot(current)) {
+                Path relative = repoRoot.relativize(current);
+                if (relative.toString().isBlank()) {
+                    return repoRoot.getFileName() != null ? repoRoot.getFileName().toString() : "root";
+                }
+                return relative.toString().replace("\\", "/");
+            }
+            current = current.getParent();
+        }
+        return repoRoot.getFileName() != null ? repoRoot.getFileName().toString() : "root";
+    }
+
+    private boolean isModuleRoot(Path directory) {
+        return Files.exists(directory.resolve("pom.xml")) ||
+               Files.exists(directory.resolve("build.gradle")) ||
+               Files.exists(directory.resolve("build.gradle.kts"));
     }
 
     private int filePriority(String filename) {

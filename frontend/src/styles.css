@@ -125,6 +125,56 @@ button:disabled {
   overflow-x: auto;
 }
 
+.markdown code {
+  background: #efe4da;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 0.9em;
+}
+
+.markdown pre code {
+  background: transparent;
+  padding: 0;
+}
+
+.markdown h1,
+.markdown h2,
+.markdown h3,
+.markdown h4 {
+  font-family: "Spectral", serif;
+  margin: 18px 0 10px;
+}
+
+.markdown blockquote {
+  margin: 16px 0;
+  padding: 10px 16px;
+  border-left: 4px solid #d1b9a7;
+  background: #faf4ee;
+}
+
+.markdown ul,
+.markdown ol {
+  padding-left: 20px;
+}
+
+.markdown table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-size: 0.95em;
+}
+
+.markdown th {
+  text-align: left;
+  background: #f2e7dd;
+}
+
+.markdown th,
+.markdown td {
+  border: 1px solid #e2d6cc;
+  padding: 8px 10px;
+}
+
 .markdown table {
   width: 100%;
   border-collapse: collapse;

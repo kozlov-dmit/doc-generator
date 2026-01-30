@@ -90,8 +90,8 @@ public class DocumentGenerator {
 
         // Сводная таблица
         doc.append("## Сводная таблица\n\n");
-        doc.append("| Переменная | Тип | Обязательная | По умолчанию | Категория | Источник | Описание |\n");
-        doc.append("|------------|-----|--------------|-------------|-----------|----------|----------|\n");
+        doc.append("| Переменная | Тип | Обязательная | По умолчанию | Категория | Модуль | Источник | Описание |\n");
+        doc.append("|------------|-----|--------------|-------------|-----------|--------|----------|----------|\n");
 
         for (EnvVariable var : sortedVariables) {
             doc.append("| `").append(var.getName()).append("` | ");
@@ -100,7 +100,8 @@ public class DocumentGenerator {
             doc.append(formatDefaultValueCell(var.getDefaultValue())).append(" | ");
             doc.append(escapeMarkdownTableCell(var.getCategory() != null ? var.getCategory() : detectCategory(var)))
                .append(" | ");
-            doc.append(var.getDefinition() != null ? var.getDefinition().getType() : "-").append(" | ");
+            doc.append(formatModuleCell(var)).append(" | ");
+            doc.append(formatSourceCell(var)).append(" | ");
             doc.append(escapeMarkdownTableCell(var.getDescription() != null ? var.getDescription() : "-"))
                .append(" |\n");
         }
@@ -139,6 +140,10 @@ public class DocumentGenerator {
                         doc.append(":").append(var.getDefinition().getLineNumber());
                     }
                     doc.append("`\n");
+                    if (var.getDefinition().getModuleName() != null &&
+                        !var.getDefinition().getModuleName().isBlank()) {
+                        doc.append("- **Модуль:** `").append(var.getDefinition().getModuleName()).append("`\n");
+                    }
                     doc.append("- **Тип:** ").append(var.getDefinition().getType()).append("\n");
 
                     if (var.getDefinition().getCodeSnippet() != null &&
@@ -276,6 +281,25 @@ public class DocumentGenerator {
         return value.replace("|", "\\|")
                     .replace("`", "\\`")
                     .replace("\n", "<br>");
+    }
+
+    private String formatSourceCell(EnvVariable var) {
+        if (var.getDefinition() == null || var.getDefinition().getFilePath() == null) {
+            return "-";
+        }
+        String source = var.getDefinition().getFilePath();
+        if (var.getDefinition().getLineNumber() > 0) {
+            source += ":" + var.getDefinition().getLineNumber();
+        }
+        return "`" + escapeMarkdownTableCell(source) + "`";
+    }
+
+    private String formatModuleCell(EnvVariable var) {
+        if (var.getDefinition() == null || var.getDefinition().getModuleName() == null ||
+            var.getDefinition().getModuleName().isBlank()) {
+            return "-";
+        }
+        return "`" + escapeMarkdownTableCell(var.getDefinition().getModuleName()) + "`";
     }
 
     /**

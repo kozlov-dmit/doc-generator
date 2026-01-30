@@ -71,6 +71,7 @@ public class EnvVariableDto {
         private String filePath;
         private int lineNumber;
         private String codeSnippet;
+        private String moduleName;
     }
 
     @Data

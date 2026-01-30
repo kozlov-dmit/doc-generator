@@ -42,4 +42,9 @@ public class VariableDefinition {
      * Имя поля или метода, где определена переменная
      */
     private String fieldOrMethodName;
+
+    /**
+     * Имя модуля, в котором найдено определение
+     */
+    private String moduleName;
 }

@@ -1,11 +1,11 @@
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import Field from "./components/Field.jsx";
 import Panel from "./components/Panel.jsx";
 import Header from "./components/Header.jsx";
 
 export default function App() {
-  const [bitbucketUrl, setBitbucketUrl] = useState("");
   const [repositoryUrl, setRepositoryUrl] = useState("");
   const [branch, setBranch] = useState("");
   const [markdown, setMarkdown] = useState("");
@@ -13,9 +13,9 @@ export default function App() {
   const [loading, setLoading] = useState(false);
 
   const submit = async () => {
-    const repo = bitbucketUrl.trim() || repositoryUrl.trim();
+    const repo = repositoryUrl.trim();
     if (!repo) {
-      setStatus("Заполните Bitbucket Url или repositoryUrl.");
+      setStatus("Заполните repositoryUrl.");
       return;
     }
 
@@ -39,7 +39,7 @@ export default function App() {
       }
 
       const text = await response.text();
-      setMarkdown(text);
+      setMarkdown(stripMarkdownFences(text));
       setStatus("Готово.");
     } catch (err) {
       setStatus(`Ошибка: ${err.message}`);
@@ -58,17 +58,11 @@ export default function App() {
         <div className="grid">
           <Panel title="Параметры запуска">
             <Field
-              label="Bitbucket Url"
-              placeholder="https://bitbucket.org/org/repo.git"
-              value={bitbucketUrl}
-              onChange={setBitbucketUrl}
-              hint="Можно оставить пустым, если используете repositoryUrl."
-            />
-            <Field
               label="repositoryUrl"
               placeholder="https://github.com/org/repo.git"
               value={repositoryUrl}
               onChange={setRepositoryUrl}
+              hint="Можно указать локальный путь, например /path/to/repo"
             />
             <Field
               label="branch"
@@ -84,7 +78,9 @@ export default function App() {
           <Panel title="Документация (Markdown)">
             {markdown ? (
               <div className="markdown">
-                <ReactMarkdown>{markdown}</ReactMarkdown>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {markdown}
+                </ReactMarkdown>
               </div>
             ) : (
               <p>Здесь появится результат в формате Markdown.</p>
@@ -94,4 +90,11 @@ export default function App() {
       </div>
     </div>
   );
+}
+
+function stripMarkdownFences(text) {
+  if (!text) return text;
+  const trimmed = text.trim();
+  const fenceMatch = trimmed.match(/^```[a-zA-Z]*\n([\s\S]*?)\n```$/);
+  return fenceMatch ? fenceMatch[1].trim() : text;
 }
