@@ -42,5 +42,5 @@ output/
 .env.local
 *.env
 
-# Maven wrapper
-.mvn
+# Node.js
+**/node_modules/

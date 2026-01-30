@@ -33,20 +33,24 @@ cd env-doc-agent
 ./mvnw clean package -DskipTests
 ```
 
-### Веб-интерфейс
+### Веб-интерфейс (React)
 
-После запуска приложения интерфейс доступен по адресу:
+Интерфейс запускается отдельно из папки `frontend`:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+По умолчанию UI доступен по адресу:
 
 ```
-http://localhost:8080/
+http://localhost:5173/
 ```
 
-В интерфейсе доступны поля:
-- Bitbucket Url
-- repositoryUrl
-- branch
-
-Нажмите кнопку **Сгенерировать** — приложение выполнит синхронный анализ и вернёт Markdown-документацию, которая будет показана на экране.
+UI проксирует запросы на бэкенд по `/api` (ожидается, что приложение запущено на `http://localhost:8080`).
+В интерфейсе доступны поля: Bitbucket Url, repositoryUrl, branch.
 
 ### REST API режим
 

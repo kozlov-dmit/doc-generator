@@ -14,21 +14,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.io.ByteArrayInputStream;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.security.KeyFactory;
-import java.security.KeyStore;
-import java.security.PrivateKey;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateFactory;
-import java.security.spec.PKCS8EncodedKeySpec;
-import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Конфигурация для GigaChat API через langchain4j-gigachat.
@@ -83,31 +69,41 @@ public class GigaChatConfig {
     private boolean verifySsl = false;
 
     /**
-     * Путь к CA сертификату (PEM)
+     * Тип keystore (например, PKCS12, JKS)
      */
-    private String caPem;
+    private String keystoreType;
 
     /**
-     * Путь к клиентскому сертификату (PEM)
+     * Путь к keystore
      */
-    private String certPem;
+    private String keystorePath;
 
     /**
-     * Путь к приватному ключу (PEM, PKCS8)
+     * Пароль keystore
      */
-    private String keyPem;
+    private String keystorePassword;
 
     /**
-     * Пароль приватного ключа (если есть)
+     * Тип truststore (например, PKCS12, JKS)
      */
-    private String keyPassword;
+    private String truststoreType;
+
+    /**
+     * Путь к truststore
+     */
+    private String truststorePath;
+
+    /**
+     * Пароль truststore
+     */
+    private String truststorePassword;
 
     /**
      * Создаёт бин GigaChatChatModel для использования в сервисах.
      */
     @Bean
     public GigaChatChatModel gigaChatChatModel(MeterRegistry meterRegistry) {
-        if (hasCertificateAuthConfigured()) {
+        if (hasKeyStoreConfigured()) {
             var httpClient = buildCertificateHttpClient();
             AuthClient authClient = AuthClient.builder()
                 .withCertificatesAuth(httpClient)
@@ -161,129 +157,32 @@ public class GigaChatConfig {
             .build();
     }
 
-    private boolean hasCertificateAuthConfigured() {
-        return (certPem != null && !certPem.isBlank())
-            || (keyPem != null && !keyPem.isBlank());
+    private boolean hasKeyStoreConfigured() {
+        return keystorePath != null && !keystorePath.isBlank();
     }
 
     private chat.giga.http.client.HttpClient buildCertificateHttpClient() {
-        if (certPem == null || certPem.isBlank() || keyPem == null || keyPem.isBlank()) {
-            throw new IllegalArgumentException("Certificate auth требует certPem и keyPem");
+        if (keystorePath == null || keystorePath.isBlank()) {
+            throw new IllegalArgumentException("Certificate auth требует keystorePath");
         }
 
-        try {
-            String password = keyPassword != null ? keyPassword : "";
+        SSL.SSLBuilder sslBuilder = SSL.builder()
+            .keystorePath(keystorePath)
+            .keystorePassword(keystorePassword)
+            .keystoreType(keystoreType != null ? keystoreType : "PKCS12")
+            .verifySslCerts(verifySsl);
 
-            Path keyStorePath = createKeyStore(certPem, keyPem, password);
-            Path trustStorePath = caPem != null && !caPem.isBlank()
-                ? createTrustStore(caPem, password)
-                : null;
-
-            SSL ssl;
-            if (trustStorePath != null) {
-                ssl = SSL.builder()
-                    .keystorePath(keyStorePath.toString())
-                    .keystorePassword(password)
-                    .keystoreType("PKCS12")
-                    .truststorePath(trustStorePath.toString())
-                    .truststorePassword(password)
-                    .trustStoreType("PKCS12")
-                    .verifySslCerts(verifySsl)
-                    .build();
-            } else {
-                ssl = SSL.builder()
-                    .keystorePath(keyStorePath.toString())
-                    .keystorePassword(password)
-                    .keystoreType("PKCS12")
-                    .verifySslCerts(verifySsl)
-                    .build();
-            }
-
-            return new JdkHttpClientBuilder()
-                .ssl(ssl)
-                .build();
-        } catch (Exception e) {
-            throw new IllegalStateException("Failed to initialize GigaChat with certificates", e);
-        }
-    }
-
-    private Path createKeyStore(String certPath, String keyPath, String password) throws Exception {
-        List<Certificate> certificates = readCertificates(certPath);
-        if (certificates.isEmpty()) {
-            throw new IllegalArgumentException("Certificate file is empty: " + certPath);
-        }
-        PrivateKey privateKey = readPrivateKey(keyPath);
-
-        KeyStore keyStore = KeyStore.getInstance("PKCS12");
-        keyStore.load(null, null);
-        keyStore.setKeyEntry("gigachat", privateKey, password.toCharArray(),
-            certificates.toArray(new Certificate[0]));
-
-        Path keyStoreFile = Files.createTempFile("gigachat-keystore", ".p12");
-        keyStoreFile.toFile().deleteOnExit();
-        try (var out = Files.newOutputStream(keyStoreFile)) {
-            keyStore.store(out, password.toCharArray());
-        }
-        return keyStoreFile;
-    }
-
-    private Path createTrustStore(String caPath, String password) throws Exception {
-        List<Certificate> certificates = readCertificates(caPath);
-        if (certificates.isEmpty()) {
-            throw new IllegalArgumentException("CA file is empty: " + caPath);
+        if (truststorePath != null && !truststorePath.isBlank()) {
+            sslBuilder
+                .truststorePath(truststorePath)
+                .truststorePassword(truststorePassword)
+                .trustStoreType(truststoreType != null ? truststoreType : "PKCS12");
         }
 
-        KeyStore trustStore = KeyStore.getInstance("PKCS12");
-        trustStore.load(null, null);
-        int index = 0;
-        for (Certificate cert : certificates) {
-            trustStore.setCertificateEntry("ca-" + index++, cert);
-        }
+        SSL ssl = sslBuilder.build();
 
-        Path trustStoreFile = Files.createTempFile("gigachat-truststore", ".p12");
-        trustStoreFile.toFile().deleteOnExit();
-        try (var out = Files.newOutputStream(trustStoreFile)) {
-            trustStore.store(out, password.toCharArray());
-        }
-        return trustStoreFile;
-    }
-
-    private List<Certificate> readCertificates(String path) throws Exception {
-        String pem = Files.readString(Path.of(path), StandardCharsets.UTF_8);
-        Pattern pattern = Pattern.compile(
-            "-----BEGIN CERTIFICATE-----([^-]+)-----END CERTIFICATE-----",
-            Pattern.DOTALL
-        );
-        Matcher matcher = pattern.matcher(pem);
-        List<Certificate> certificates = new ArrayList<>();
-        CertificateFactory factory = CertificateFactory.getInstance("X.509");
-        while (matcher.find()) {
-            String base64 = matcher.group(1).replaceAll("\\s+", "");
-            byte[] decoded = Base64.getDecoder().decode(base64);
-            try (var in = new ByteArrayInputStream(decoded)) {
-                certificates.add(factory.generateCertificate(in));
-            }
-        }
-        return certificates;
-    }
-
-    private PrivateKey readPrivateKey(String path) throws Exception {
-        String pem = Files.readString(Path.of(path), StandardCharsets.UTF_8);
-        if (pem.contains("BEGIN RSA PRIVATE KEY")) {
-            throw new IllegalArgumentException("PKCS1 ключ не поддерживается, используйте PKCS8");
-        }
-
-        String sanitized = pem
-            .replace("-----BEGIN PRIVATE KEY-----", "")
-            .replace("-----END PRIVATE KEY-----", "")
-            .replaceAll("\\s+", "");
-        byte[] decoded = Base64.getDecoder().decode(sanitized);
-        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(decoded);
-
-        try {
-            return KeyFactory.getInstance("RSA").generatePrivate(keySpec);
-        } catch (Exception ignored) {
-            return KeyFactory.getInstance("EC").generatePrivate(keySpec);
-        }
+        return new JdkHttpClientBuilder()
+            .ssl(ssl)
+            .build();
     }
 }
